@@ -3,7 +3,8 @@ const Butter = require("../butter");
 const { request } = require("node:http");
 
 
-// Users & Posts Data
+//SECTION --------------- Users & Posts Data ----------------//
+//ANCHOR --- Users Data ------//
 const USERS = [
   { id: 1, name: "Om Patil", username: "om123", password: "string" },
   { id: 2, name: "Meredith Green", username: "merit123", password: "string" },
@@ -12,6 +13,7 @@ const USERS = [
   { id: 5, name: "Yashodip Deore", username: "Yashodip123", password: "string" },
 ];
 
+//ANCHOR ---- Posts data -----//
 const POSTS = [
   {
     id: 1,
@@ -22,13 +24,15 @@ const POSTS = [
 ];
 
 
-//Creating server from Butter.js framework
+
+//SECTION ---- Creating server from Butter.js framework ---//
 const server = new Butter();
 
 
 
-// ------ Files Routes ------ //
 
+
+//SECTION --------------- Files Routes ------------------- //
 server.route("get", "/", (req, res) => {
   res.sendFile("./public/index.html", "text/html");
 });
@@ -47,9 +51,10 @@ server.route("get", "/scripts.js", (req, res) => {
 
 
 
-// ------ JSON Routes ------ //
 
-//Login functionality json route
+//SECTION ----------------- JSON Routes ------------------------ //
+
+//ANCHOR ----- Login functionality json route ----//
 server.route('post', '/api/login', (req, res) => {
   let body = '';
 
@@ -77,14 +82,19 @@ server.route('post', '/api/login', (req, res) => {
     } else {
       res.status(401).json({ message: 'Invalid user name or password !' });
     };
-
-
   });
 });
 
 
+//ANCHOR - 
 
-// Send the list of all the posts that we have
+server.route("get", '/api/user', (req, res) => {
+
+});
+
+
+//ANCHOR ------- Posts route ---------//
+// (send all the posts to the user)
 server.route("get", "/api/posts", (req, res) => {
   const posts = POSTS.map((post) => {
     const user = USERS.find((user) => user.id === post.userId);
@@ -97,7 +107,8 @@ server.route("get", "/api/posts", (req, res) => {
 
 
 
-//Making our server live
+
+//SECTION ----------- Making our server live------------//
 const PORT = 8000;
 server.listen(PORT, () => {
   console.log(`Server has started on port http://localhost:${PORT}`);
