@@ -5,7 +5,6 @@ const { error } = require("node:console");
 
 
 //SECTION --------------- Users & Posts Data ----------------//
-
 //ANCHOR - Sessions data------//!SECTION
 //{userId: 1, token: 23243143}
 const SESSIONS = [];
@@ -34,8 +33,6 @@ const POSTS = [
 
 //SECTION ---- Creating server from Butter.js framework ---//
 const server = new Butter();
-
-
 
 
 
@@ -104,26 +101,46 @@ server.route('post', '/api/login', (req, res) => {
 });
 
 
-//ANCHOR ------ User Route ---------//
+
+//ANCHOR ------ Log a user out -------//
+server.route('delete', '/api/logout', (req, res) => {
+
+});
+
+
+
+//ANCHOR ------ User information Route ---------//
 server.route("get", '/api/user', (req, res) => {
   const cookies = req.headers.cookie || '';
   const token = cookies.split('; ').find(c => c.startsWith('token='))?.split('=')[1];
 
-
+  //verifying if token exists or not
   const session = SESSIONS.find((session) => {
     return session.token === token;
   });
+
+
   if (session) {
     //Send the users profile information
+    const user = USERS.find((user) => {
+      return user.id === session.userId;
+    });
+    res.json({ username: user.username, name: user.name });
   } else {
     res.status(401).json({ error: "Unauthorized " });
   }
 
-
-
+  //Logging the token
   console.log("Token:", token);
+});
+
+
+
+//ANCHOR - Updating user information route ---//
+server.route('put', '/api/user', (req, res) => {
 
 });
+
 
 
 //ANCHOR ------- Posts route ---------//
@@ -138,6 +155,12 @@ server.route("get", "/api/posts", (req, res) => {
   res.status(200).json(posts);
 });
 
+
+
+//ANCHOR -------- Create post route---------//
+server.route('post', '/api/posts', (req, res) => {
+
+});
 
 
 
