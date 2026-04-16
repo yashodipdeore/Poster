@@ -34,6 +34,26 @@ const POSTS = [
 //SECTION ---- Creating server from Butter.js framework ---//
 const server = new Butter();
 
+server.beforeEach((req, res) => {
+  console.log('this is the first middleware function');
+  next();
+});
+
+server.beforeEach((req, res, next) => {
+  setTimeout(() => {
+    next();
+    console.log('this is the second middleware function');
+  }, 2000)
+});
+
+
+server.beforeEach((req, res) => {
+  console.log('this is the third middleware function');
+  next();
+});
+
+
+
 
 
 //SECTION --------------- Files Routes ------------------- //

@@ -15,6 +15,7 @@ class Butter {
      *
      */
     this.routes = {};
+    this.middleware = [];
 
     this.server.on("request", (req, res) => {
       // Send a file back to the client
@@ -45,21 +46,33 @@ class Butter {
         return res
           .status(404)
           .json({ error: `Cannot ${req.method} ${req.url}` });
-      }
+      };
 
-      this.routes[req.method.toLocaleLowerCase() + req.url](req, res);
+      //Run al the middleware functions before we run the corresponding route
+
+      this.middleware[0](req, res, () => {
+        this.middleware[1](req, res, () => {
+          this.middleware[2](req, res, () => {
+            this.routes[req.method.toLocaleLowerCase() + req.url](req, res);
+          });
+        });
+      });
     });
-  }
+  };
 
   route(method, path, cb) {
     this.routes[method + path] = cb;
-  }
+  };
+
+  beforeEach(cb) {
+    this.middleware.push(cb);
+  };
 
   listen(port, cb) {
     this.server.listen(port, () => {
       cb();
     });
-  }
+  };
 }
 
 module.exports = Butter;
