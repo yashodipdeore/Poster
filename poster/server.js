@@ -34,7 +34,7 @@ const POSTS = [
 //SECTION ---- Creating server from Butter.js framework ---//
 const server = new Butter();
 
-server.beforeEach((req, res) => {
+server.beforeEach((req, res, next) => {
   console.log('this is the first middleware function');
   next();
 });
@@ -43,11 +43,11 @@ server.beforeEach((req, res, next) => {
   setTimeout(() => {
     next();
     console.log('this is the second middleware function');
-  }, 2000)
+  }, 2000);
 });
 
 
-server.beforeEach((req, res) => {
+server.beforeEach((req, res, next) => {
   console.log('this is the third middleware function');
   next();
 });
@@ -58,6 +58,7 @@ server.beforeEach((req, res) => {
 
 //SECTION --------------- Files Routes ------------------- //
 server.route("get", "/", (req, res) => {
+  console.log('This is the ' / ' route');
   res.sendFile("./public/index.html", "text/html");
 });
 
@@ -76,7 +77,6 @@ server.route("get", "/styles.css", (req, res) => {
 server.route("get", "/scripts.js", (req, res) => {
   res.sendFile("./public/scripts.js", "text/javascript");
 });
-
 
 
 

@@ -28,11 +28,15 @@ class Butter {
         fileStream.pipe(res);
       };
 
+
+
       // Set the status code of the response
       res.status = (code) => {
         res.statusCode = code;
         return res;
       };
+
+
 
       // Send a json data back to the client (for small json data, less than the highWaterMark)
       res.json = (data) => {
@@ -41,6 +45,8 @@ class Butter {
         res.end(JSON.stringify(data));
       };
 
+
+
       // If the routes object does not have a key of req.method + req.url, return 404
       if (!this.routes[req.method.toLocaleLowerCase() + req.url]) {
         return res
@@ -48,8 +54,9 @@ class Butter {
           .json({ error: `Cannot ${req.method} ${req.url}` });
       };
 
-      //Run al the middleware functions before we run the corresponding route
 
+
+      //Run al the middleware functions before we run the corresponding route
       this.middleware[0](req, res, () => {
         this.middleware[1](req, res, () => {
           this.middleware[2](req, res, () => {
@@ -57,6 +64,25 @@ class Butter {
           });
         });
       });
+
+
+      const runMiddleWare = (req, res, middleware, index) => {
+        if (index === middleware.length) {
+          //Out exit point...
+
+
+        } else {
+          middleware[index](req, res, () => {
+            runMiddleWare(req, res, middleware, index + 1);
+          });
+
+        }
+      }
+
+      runMiddleWare(req, res, this.middleware, 0);
+
+
+
     });
   };
 
