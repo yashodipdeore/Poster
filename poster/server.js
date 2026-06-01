@@ -34,6 +34,7 @@ const POSTS = [
 //SECTION ---- Creating server from Butter.js framework ---//
 const server = new Butter();
 
+//for authentication
 server.beforeEach((req, res, next) => {
   console.log('this is the first middleware function');
   next();
@@ -82,6 +83,8 @@ server.route("get", "/scripts.js", (req, res) => {
 
 //SECTION ----------------- JSON Routes ------------------------ //
 
+//SECTION ----------------- JSON Routes ------------------------ //
+
 //ANCHOR ----- Login functionality json route ----//
 //--- Log a user and give them a token------//
 server.route('post', '/api/login', (req, res) => {
@@ -104,19 +107,34 @@ server.route('post', '/api/login', (req, res) => {
 
     //check the password if user exists
     if (user && user.password === password) {
-      //At this point, we know that the client is who they say they are
 
-      //Generating 10 digit's token & Saving it to the  Sessions array
-      const token = Math.floor(Math.random() * 100000000000).toString();
-      SESSIONS.push({ userId: user.id, token: token });
+      //Generating token & Saving it to Sessions array
+      const token = Math.floor(
+        Math.random() * 100000000000
+      ).toString();
 
-      //passing to token to every path using cookies
-      res.setHeader('Set-Cookie', `token=${token}; Path=/;`);
+      SESSIONS.push({
+        userId: user.id,
+        token: token
+      });
 
-      res.status(200).json({ message: 'Logged in successfully !' });
+      //passing token using cookies
+      res.setHeader(
+        'Set-Cookie',
+        `token=${token}; Path=/;`
+      );
+
+      res.status(200).json({
+        message: 'Logged in successfully !'
+      });
+
     } else {
-      res.status(401).json({ message: 'Invalid user name or password !' });
-    };
+
+      res.status(401).json({
+        message: 'Invalid username or password !'
+      });
+
+    }
   });
 });
 
@@ -125,35 +143,229 @@ server.route('post', '/api/login', (req, res) => {
 //ANCHOR ------ Log a user out -------//
 server.route('delete', '/api/logout', (req, res) => {
 
+  const cookies = req.headers.cookie || '';
+
+  const token = cookies
+    .split('; ')
+    .find((cookie) => cookie.startsWith('token='))
+    ?.split('=')[1];
+
+  const sessionIndex = SESSIONS.findIndex((session) => {
+    return session.token === token;
+  });
+
+  if (sessionIndex !== -1) {
+
+    //remove session
+    SESSIONS.splice(sessionIndex, 1);
+
+    //remove cookie
+    res.setHeader(
+      'Set-Cookie',
+      'token=; Path=/; Max-Age=0;'
+    );
+
+    res.status(200).json({
+      message: 'Logged out successfully !'
+    });
+
+  } else {
+
+    res.status(401).json({
+      error: 'Unauthorized'
+    });
+
+  }
+
 });
 
 
 
 //ANCHOR ------ User information Route ---------//
-server.route("get", '/api/user', (req, res) => {
-  const cookies = req.headers.cookie || '';
-  const token = cookies.split('; ').find(c => c.startsWith('token='))?.split('=')[1];
+server.route('get', '/api/user', (req, res) => {
 
-  //verifying if token exists or not
+  const cookies = req.headers.cookie || '';
+
+  const token = cookies
+    .split('; ')
+    .find((cookie) => cookie.startsWith('token='))
+    ?.split('=')[1];
+
+  //verify token
   const session = SESSIONS.find((session) => {
     return session.token === token;
   });
 
-
   if (session) {
-    //Send the users profile information
+
     const user = USERS.find((user) => {
       return user.id === session.userId;
     });
-    res.json({ username: user.username, name: user.name });
+
+    res.status(200).json({
+      username: user.username,
+      name: user.name
+    });
+
   } else {
-    res.status(401).json({ error: "Unauthorized " });
+
+    res.status(401).json({
+      error: 'Unauthorized'
+    });
+
   }
 
-  //Logging the token
-  console.log("Token:", token);
 });
 
+
+
+//ANCHOR - Updating user information route ---//
+server.route('put', '/api/user', (req, res) => {
+
+  const cookies = req.headers.cookie || '';
+
+  const token = cookies
+    .split('; ')
+    .find((cookie) => cookie.startsWith('token='))
+    ?.split('=')[1];
+
+  //verify token
+  const session = SESSIONS.find((session) => {
+    return session.token === token;
+  });
+
+  if (!session) {
+    return res.status(401).json({
+      error: 'Unauthorized'
+    });
+  }
+
+  let body = '';
+
+  req.on('data', (chunk) => {
+    body += chunk.toString('utf-8');
+  });
+
+  req.on('end', () => {
+
+    body = JSON.parse(body);
+
+    const name = body.name;
+    const username = body.username;
+
+    const user = USERS.find((user) => {
+      return user.id === session.userId;
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
+    if (name) {
+      user.name = name;
+    }
+
+    if (username) {
+      user.username = username;
+    }
+
+    res.status(200).json({
+      message: 'User updated successfully !',
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username
+      }
+    });
+
+  });
+
+});
+
+
+
+//ANCHOR ------- Posts route ---------//
+// (send all the posts to the user)
+server.route('get', '/api/posts', (req, res) => {
+
+  const posts = POSTS.map((post) => {
+
+    const user = USERS.find((user) => {
+      return user.id === post.userId;
+    });
+
+    return {
+      ...post,
+      author: user.name
+    };
+
+  });
+
+  res.status(200).json(posts);
+
+});
+
+
+
+//ANCHOR -------- Create post route---------//
+server.route('post', '/api/posts', (req, res) => {
+
+  const cookies = req.headers.cookie || '';
+
+  const token = cookies
+    .split('; ')
+    .find((cookie) => cookie.startsWith('token='))
+    ?.split('=')[1];
+
+  //verify token
+  const session = SESSIONS.find((session) => {
+    return session.token === token;
+  });
+
+  if (!session) {
+    return res.status(401).json({
+      error: 'Unauthorized'
+    });
+  }
+
+  let body = '';
+
+  req.on('data', (chunk) => {
+    body += chunk.toString('utf-8');
+  });
+
+  req.on('end', () => {
+
+    body = JSON.parse(body);
+
+    const title = body.title;
+    const postBody = body.body;
+
+    if (!title || !postBody) {
+      return res.status(400).json({
+        error: 'Title and body are required'
+      });
+    }
+
+    const post = {
+      id: POSTS.length + 1,
+      title: title,
+      body: postBody,
+      userId: session.userId
+    };
+
+    POSTS.push(post);
+
+    res.status(201).json({
+      message: 'Post created successfully !',
+      post
+    });
+
+  });
+
+});
 
 
 //ANCHOR - Updating user information route ---//

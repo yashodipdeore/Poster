@@ -1,44 +1,33 @@
+const runMiddleWare = (req, res, middleware, index) => {
 
-const runMiddleWare = (req, res, middleware, 0) => {
-  //Out exit point...
-  if (0 === middleware.length) {
+  // Exit point
+  if (index === middleware.length) {
     this.routes[req.method.toLowerCase() + req.url](req, res);
-  } else {
-    middleware[0](req, res, () => {
-
-      // runMiddleWare(req, res, middleware, index + 1);
-      const runMiddleWare = (req, res, middleware, 1) => {
-        //Out exit point...
-        if (1 === middleware.length) {
-          this.routes[req.method.toLowerCase() + req.url](req, res);
-        } else {
-          middleware[1](req, res, () => {
-
-            // runMiddleWare(req, res, middleware, index + 1);
-            const runMiddleWare = (req, res, middleware, 2) => {
-              //Out exit point...
-              if (2 === middleware.length) {
-                this.routes[req.method.toLowerCase() + req.url](req, res);
-              } else {
-                middleware[](req, res, () => {
-
-                  // runMiddleWare(req, res, middleware, index + 1);
-
-                });
-              }
-            }
-          });
-        }
-      }
-    });
+    return;
   }
-}
 
+  middleware[index](req, res, () => {
+    runMiddleWare(req, res, middleware, index + 1);
+  });
+
+};
+
+
+// Example
 runMiddleWare(req, res, [
-  () => {
-
+  (req, res, next) => {
+    console.log('Middleware 1');
+    next();
   },
-  () => {
 
+  (req, res, next) => {
+    console.log('Middleware 2');
+    next();
+  },
+
+  (req, res, next) => {
+    console.log('Middleware 3');
+    next();
   }
+
 ], 0);
